@@ -824,7 +824,7 @@ func Build(pkgName, outpath string, config *compileopts.Config, action func(Buil
 				default:
 					return fmt.Errorf("unknown opt level: %q", config.Options.Opt)
 				}
-				cmd := exec.Command(goenv.Get("WASMOPT"), "--asyncify", "-g",
+				cmd := exec.Command(goenv.Get("WASMOPT"), "-g",
 					"--optimize-level", strconv.Itoa(optLevel),
 					"--shrink-level", strconv.Itoa(shrinkLevel),
 					executable, "--output", executable)
