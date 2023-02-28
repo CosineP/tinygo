@@ -45,11 +45,16 @@ type stackState struct {
 
 // start creates and starts a new goroutine with the given function and arguments.
 // The new goroutine is immediately started.
+//go:noinline
 func start(fn uintptr, args unsafe.Pointer, stackSize uintptr) {
-	t := &Task{}
-	t.state.initialize(fn, args, stackSize)
-	runqueuePushBack(t)
+    enqueue_fn_args(fn, args)
+    t := &Task{}
+    t.state.initialize(fn, args, stackSize)
+    runqueuePushBack(t)
 }
+
+//export enqueue_fn_args
+func enqueue_fn_args(fn uintptr, args unsafe.Pointer)
 
 //export tinygo_launch
 func (*state) launch()

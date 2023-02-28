@@ -64,6 +64,14 @@ tinygo_launch: // func (state *state) launch()
     return
     end_function
 
+.global enqueue_fn_args
+.hidden enqueue_fn_args
+.type enqueue_fn_args,@function
+enqueue_fn_args:
+    .functype enqueue_fn_args (i32, i32) -> ()
+    return
+    end_function
+
 .global  tinygo_rewind
 .hidden  tinygo_rewind
 .type    tinygo_rewind,@function
