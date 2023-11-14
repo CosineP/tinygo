@@ -1,4 +1,4 @@
-//go:build !scheduler.none && !scheduler.wasmfx
+//go:build scheduler.wasmfx
 
 package runtime
 
@@ -25,7 +25,10 @@ func run() {
 		callMain()
 		schedulerDone = true
 	}()
-	scheduler()
+	wasmfxScheduler(schedulerDone)
 }
 
 const hasScheduler = true
+
+//go:linkname wasmfxScheduler wasmfx.scheduler
+func wasmfxScheduler(schedulerDone bool)
