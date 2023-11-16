@@ -844,6 +844,28 @@ func Build(pkgName, outpath, tmpdir string, config *compileopts.Config) (BuildRe
 				if err != nil {
 					return fmt.Errorf("wasm-opt failed: %w", err)
 				}
+
+				if config.Scheduler() == "wasmfx" {
+					args = []string{}
+					args = append(args, result.Executable, "main", "src/internal/task/wasmfx.wat", "wasmfx", "--enable-bulk-memory", "--enable-exception-handling", "--enable-reference-types", "--enable-gc", "--enable-typed-continuations", "-o", "/tmp/intermediate.wasm")
+					cmd = exec.Command(os.Getenv("WASMMERGE"), args...)
+					cmd.Stdout = os.Stdout
+					cmd.Stderr = os.Stderr
+					err = cmd.Run()
+					if err != nil {
+						return fmt.Errorf("wasm-merge failed: %w", err)
+					}
+					// move intermediate to real executable again
+					args = []string{}
+					args = append(args, "/tmp/intermediate.wasm", result.Executable)
+					cmd = exec.Command("mv", args...)
+					cmd.Stdout = os.Stdout
+					cmd.Stderr = os.Stderr
+					err = cmd.Run()
+					if err != nil {
+						return fmt.Errorf("mv failed: %w", err)
+					}
+				}
 			}
 
 			// Print code size if requested.

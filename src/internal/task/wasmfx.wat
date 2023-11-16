@@ -1,8 +1,8 @@
 (module
 
-  (type $unit_unit)
-  (type $i32_unit (param i32))
-  (type $i32_i32_unit (param i32 i32))
+  (type $unit_unit (func))
+  (type $i32_unit (func (param i32)))
+  (type $i32_i32_unit (func (param i32 i32)))
   (type $resume (cont $unit_unit))
   (type $call_indirect_cont (cont $i32_i32_unit))
   (tag $reschedule)
@@ -58,41 +58,38 @@
     (table.set $queue (global.get $qback) (local.get $k))
     (global.set $qback (i32.add (global.get $qback) (i32.const 1))))
 
-  (func $scheduler (param $schedulerDone i32)
-    block  ;; label = @1
-      loop  ;; label = @2
-        local.get $schedulerDone
+  (func $scheduler (export "scheduler") (param $schedulerDone i32)
+    (block $outer
+      (loop $loop
         ;; check schedulerDone (which gets set at end of main)
-        br_if 1 (;@1;)
-        ;; pop the queue and resume the continuation
-        call $dequeue
-        br_on_null 1
-        (block $coroutine_suspend (param (ref $resume)) (result (ref $resume))
-          (resume $resume
-            (tag $effect $coroutine_suspend))
-          ;; it suspended, so continue without re-enqueuing
-          br 1)
+        (br_if $outer
+          (local.get $schedulerDone))
+        (call $enqueue
+          (block $coroutine_suspend (result (ref $resume))
+            ;; pop the queue and resume the continuation
+            (resume $resume
+              (tag $reschedule $coroutine_suspend)
+              (br_on_null $outer (call $dequeue)))
+            (br $loop)))
         ;; re-enqeue the coroutine. tinygo makes this the coroutine's job, but
         ;; we make it the scheduler's job
-        call $enqueue
-        br 0 (;@2;)
-      end
-      unreachable
-    end)
+        (br $loop))
+      (unreachable)))
 
-  (func $suspend
-    suspend $reschedule)
+  (func $suspend (export "suspend")
+    (suspend $reschedule))
 
   (func $call_indirect (param i32) (param i32)
-    (call_indirect (type $i32_unit) (local.get 1) (local.get 0)))
+    (call_indirect $calls (type $i32_unit) (local.get 1) (local.get 0)))
 
-  (func $enqueueFn (param $fn i32) (param $args i32)
-    (local.get $fn)
-    (local.get $args)
-    (cont.new $call_indirect_cont (ref.func $call_indirect))
-    (cont.bind $call_indirect_cont $resume)
-    call $enqueue)
+  (func $enqueueFn (export "enqueueFn") (param $fn i32) (param $args i32)
+    (call $enqueue
+      (cont.bind $call_indirect_cont $resume
+        (local.get $fn)
+        (local.get $args)
+        (cont.new $call_indirect_cont (ref.func $call_indirect)))))
 
-  (elem $call_indirect)
+  (table $calls 1 1 funcref)
+  (elem (table $calls) (offset (i32.const 0)) (ref null func) (ref.func $call_indirect))
 
 )

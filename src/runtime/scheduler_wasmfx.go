@@ -30,5 +30,5 @@ func run() {
 
 const hasScheduler = true
 
-//go:linkname wasmfxScheduler wasmfx.scheduler
+//go:wasmimport wasmfx scheduler
 func wasmfxScheduler(schedulerDone bool)

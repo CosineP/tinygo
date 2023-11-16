@@ -14,11 +14,11 @@ func runtimePanic(str string)
 // start creates and starts a new goroutine with the given function and arguments.
 // The new goroutine is immediately started.
 func start(fn uintptr, args unsafe.Pointer, stackSize uintptr) {
-	enqueueFn(fn, args)
+	enqueueFn(uint32(fn), args)
 }
 
-//go:linkname enqueueFn wasmfx.enqueueFn
-func enqueueFn(fn uintptr, args unsafe.Pointer)
+//go:wasmimport wasmfx enqueueFn
+func enqueueFn(fn uint32, args unsafe.Pointer)
 
 //go:linkname align runtime.align
 func align(p uintptr) uintptr
@@ -49,7 +49,7 @@ func (t *Task) Resume() {
 	runtimePanic("Resume should not be called for wasmfx target")
 }
 
-//go:linkname suspend wasmfx.suspend
+//go:wasmimport wasmfx suspend
 func suspend()
 
 // OnSystemStack returns whether the caller is running on the system stack.
