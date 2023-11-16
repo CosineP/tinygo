@@ -264,6 +264,7 @@ func (c *Config) CFlags() []string {
 	for _, flag := range c.Target.CFlags {
 		cflags = append(cflags, strings.ReplaceAll(flag, "{root}", goenv.Get("TINYGOROOT")))
 	}
+	cflags = append([]string{"-isystem", os.Getenv("CLANG_INCLUDE")}, cflags...)
 	switch c.Target.Libc {
 	case "darwin-libSystem":
 		root := goenv.Get("TINYGOROOT")
