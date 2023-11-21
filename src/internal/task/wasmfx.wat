@@ -7,6 +7,8 @@
   (type $call_indirect_cont (cont $i32_i32_unit))
   (tag $reschedule)
 
+  (import $call_indirect "main" "call_indirect" (type $i32_i32_unit))
+
   ;; Table as simple queue (keeping it simple, no ring buffer)
   (table $queue 0 (ref null $resume))
   (global $qdelta i32 (i32.const 10))
@@ -26,6 +28,9 @@
     (global.set $qfront (i32.add (local.get $i) (i32.const 1)))
     (table.get $queue (local.get $i))
   )
+
+  (func $tryGrow (export "tryGrow") (result i32)
+    (i32.const 100))
 
   (func $enqueue (param $k (ref $resume))
     ;; Check if queue is full
@@ -79,17 +84,11 @@
   (func $suspend (export "suspend")
     (suspend $reschedule))
 
-  (func $call_indirect (param i32) (param i32)
-    (call_indirect $calls (type $i32_unit) (local.get 1) (local.get 0)))
-
   (func $enqueueFn (export "enqueueFn") (param $fn i32) (param $args i32)
     (call $enqueue
       (cont.bind $call_indirect_cont $resume
         (local.get $fn)
         (local.get $args)
         (cont.new $call_indirect_cont (ref.func $call_indirect)))))
-
-  (table $calls 1 1 funcref)
-  (elem (table $calls) (offset (i32.const 0)) (ref null func) (ref.func $call_indirect))
 
 )
